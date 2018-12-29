@@ -15,13 +15,12 @@ import com.guitar.db.model.Model;
 
 @Repository
 public class ModelRepository {
-	
-	@Autowired
-	private ModelJpaRepository modelJpaRepository;
-	
 	@PersistenceContext
 	private EntityManager entityManager;
 
+	@Autowired
+	private ModelJpaRepository modelJpaRepository;
+	
 	/**
 	 * Create
 	 */
@@ -54,12 +53,7 @@ public class ModelRepository {
 	 * Custom finder
 	 */
 	public List<Model> getModelsInPriceRange(BigDecimal lowest, BigDecimal highest) {
-		@SuppressWarnings("unchecked")
-		List<Model> mods = entityManager
-				.createQuery("select m from Model m where m.price >= :lowest and m.price <= :highest")
-				.setParameter("lowest", lowest)
-				.setParameter("highest", highest).getResultList();
-		return mods;
+		return modelJpaRepository.findByPriceGreaterThanEqualAndPriceLessThanEqual(lowest, highest);
 	}
 
 	/**

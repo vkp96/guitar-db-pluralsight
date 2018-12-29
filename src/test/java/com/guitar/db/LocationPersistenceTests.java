@@ -1,6 +1,7 @@
 package com.guitar.db;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNotNull;
 
 import java.util.List;
@@ -17,12 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.guitar.db.model.Location;
 import com.guitar.db.repository.LocationJpaRepository;
-import com.guitar.db.repository.LocationRepository;
 
 @ContextConfiguration(locations={"classpath:com/guitar/db/applicationTests-context.xml"})
 @RunWith(SpringJUnit4ClassRunner.class)
 public class LocationPersistenceTests {
-
 	@Autowired
 	private LocationJpaRepository locationJpaRepository;
 
@@ -30,11 +29,27 @@ public class LocationPersistenceTests {
 	private EntityManager entityManager;
 
 	@Test
-	public void testLocationJpa() {
+	public void testJpaFind() {
 		List<Location> locations = locationJpaRepository.findAll();
 		assertNotNull(locations);
 	}
 	
+	@Test
+	public void testJpaAnd() {
+		List<Location> locations = locationJpaRepository.findByStateNot("Utah");
+		assertNotNull(locations);
+		
+		assertNotSame("Utah", locations.get(0).getState());
+	}
+
+	@Test
+	public void testJpaOr() {
+		List<Location> locations = locationJpaRepository.findByStateIsOrCountryEquals("Utah", "Utah");
+		assertNotNull(locations);
+		
+		assertEquals("Utah", locations.get(0).getState());
+	}
+
 	@Test
 	@Transactional
 	public void testSaveAndGetAndDelete() throws Exception {
@@ -57,8 +72,18 @@ public class LocationPersistenceTests {
 
 	@Test
 	public void testFindWithLike() throws Exception {
-		List<Location> locs = locationJpaRepository.findByStateLike("New%");
+		List<Location> locs = locationJpaRepository.findByStateIgnoreCaseStartingWith("new");
 		assertEquals(4, locs.size());
+
+		locs = locationJpaRepository.findByStateNotLikeOrderByStateAsc("New%");
+		assertEquals(46, locs.size());
+		
+		locs.forEach((location) -> {
+			System.out.println(location.getState());
+		});
+		
+		Location loc = locationJpaRepository.findFirstByStateIgnoreCaseStartingWith("a");
+		assertEquals("Alabama", loc.getState());
 	}
 
 	@Test
